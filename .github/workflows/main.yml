@@ -1,23 +1,36 @@
-name: VPS Gambiarra
+name: Acesso remoto com AnyDesk
 
 on: workflow_dispatch
 
 jobs:
-  vps_job:
+  remote_access:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Setup Ngrok
+      - name: Instalar pacotes necessários
         run: |
           sudo apt-get update
-          sudo apt-get install -y openssh-server
-          sudo systemctl start ssh
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/keyrings/ngrok.asc >/dev/null
-          echo "deb [signed-by=/etc/apt/keyrings/ngrok.asc] https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt-get update
-          sudo apt-get install ngrok
-          ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-          ngrok tcp 22 > ngrok.log &
-          sleep 5
-          cat ngrok.log
-      - name: Keep Alive
-        run: sleep 3600  # 1 hora "vps" rodando
+          sudo apt-get install -y anydesk xvfb
+
+      - name: Instalar e configurar AnyDesk
+        run: |
+          # Baixar e instalar o AnyDesk
+          wget https://download.anydesk.com/linux/anydesk_6.1.1-1_amd64.deb
+          sudo dpkg -i anydesk_6.1.1-1_amd64.deb
+          sudo apt-get install -f  # Resolver dependências
+
+          # Rodar AnyDesk em segundo plano
+          anydesk &
+
+      - name: Configurar Xvfb para criar ambiente gráfico
+        run: |
+          export DISPLAY=:99
+          nohup Xvfb :99 -screen 0 1024x768x16 &
+
+      - name: Espera o AnyDesk estar rodando
+        run: |
+          sleep 30  # Tempo para o AnyDesk iniciar
+
+      - name: Mostrar informações de acesso
+        run: |
+          echo "Você pode acessar o AnyDesk no ID: $(anydesk --get-id)"
