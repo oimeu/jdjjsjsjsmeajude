@@ -1,38 +1,41 @@
-name: Acesso remoto com RustDesk
+name: Testar RustDesk no GitHub Actions
 
 on: workflow_dispatch
 
 jobs:
-  remote_access:
+  rustdesk_job:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Instalar pacotes necessários
+      - name: Atualizar pacotes
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb wget
+          sudo apt-get install -y wget xvfb
 
       - name: Baixar e instalar RustDesk
         run: |
-          # Baixar a versão mais recente do RustDesk para Linux
-          wget https://github.com/rustdesk/rustdesk/releases/download/v1.1.9/rustdesk-1.1.9-linux-x86_64.tar.gz
-          tar -xvzf rustdesk-1.1.9-linux-x86_64.tar.gz
-          cd rustdesk-1.1.9-linux-x86_64
+          # Baixar o pacote .deb do RustDesk
+          wget https://github.com/rustdesk/rustdesk/releases/download/nightly/rustdesk-1.3.9-x86_64.deb
+          
+          # Instalar o pacote .deb
+          sudo dpkg -i rustdesk-1.3.9-x86_64.deb
+          sudo apt-get install -f  # Resolver dependências
 
-      - name: Configurar Xvfb para criar um ambiente gráfico
+      - name: Configurar e iniciar Xvfb (servidor gráfico virtual)
         run: |
           export DISPLAY=:99
           nohup Xvfb :99 -screen 0 1024x768x16 &
 
-      - name: Rodar RustDesk em segundo plano
+      - name: Iniciar RustDesk
         run: |
-          ./rustdesk &
+          # Rodar RustDesk em segundo plano
+          nohup rustdesk &
 
-      - name: Espera o RustDesk estar rodando
+      - name: Esperar RustDesk iniciar
         run: |
-          sleep 30  # Tempo para o RustDesk iniciar
+          sleep 30  # Espera o RustDesk iniciar
 
       - name: Mostrar informações de acesso
         run: |
-          # Aqui você pode colocar um comando para obter o ID ou a URL do RustDesk (caso necessário)
-          echo "Você pode acessar o RustDesk na máquina com a interface gráfica"
+          # Avisa o ID do RustDesk (o número que você vai usar para se conectar)
+          echo "Você pode acessar o RustDesk no ID: $(ps aux | grep rustdesk | awk '{print $2}')"
