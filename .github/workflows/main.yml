@@ -1,4 +1,4 @@
-name: Acesso remoto com AnyDesk
+name: Acesso remoto com RustDesk
 
 on: workflow_dispatch
 
@@ -10,37 +10,29 @@ jobs:
       - name: Instalar pacotes necessários
         run: |
           sudo apt-get update
-          sudo apt-get install -y ca-certificates curl apt-transport-https
+          sudo apt-get install -y xvfb wget
 
-      - name: Adicionar chave GPG do AnyDesk
+      - name: Baixar e instalar RustDesk
         run: |
-          sudo install -m 0755 -d /etc/apt/keyrings
-          sudo curl -fsSL https://keys.anydesk.com/repos/DEB-GPG-KEY -o /etc/apt/keyrings/keys.anydesk.com.asc
-          sudo chmod a+r /etc/apt/keyrings/keys.anydesk.com.asc
+          # Baixar a versão mais recente do RustDesk para Linux
+          wget https://github.com/rustdesk/rustdesk/releases/download/v1.1.9/rustdesk-1.1.9-linux-x86_64.tar.gz
+          tar -xvzf rustdesk-1.1.9-linux-x86_64.tar.gz
+          cd rustdesk-1.1.9-linux-x86_64
 
-      - name: Adicionar repositório do AnyDesk
-        run: |
-          echo "deb [signed-by=/etc/apt/keyrings/keys.anydesk.com.asc] https://deb.anydesk.com all main" | sudo tee /etc/apt/sources.list.d/anydesk-stable.list > /dev/null
-          
-      - name: Atualizar repositórios e instalar AnyDesk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y anydesk
-
-      - name: Iniciar AnyDesk em segundo plano
-        run: |
-          anydesk &
-          sleep 5  # Espera o AnyDesk iniciar
-
-      - name: Configurar e iniciar Xvfb
+      - name: Configurar Xvfb para criar um ambiente gráfico
         run: |
           export DISPLAY=:99
           nohup Xvfb :99 -screen 0 1024x768x16 &
 
-      - name: Espera o AnyDesk estar rodando
+      - name: Rodar RustDesk em segundo plano
         run: |
-          sleep 30  # Tempo para o AnyDesk iniciar
+          ./rustdesk &
+
+      - name: Espera o RustDesk estar rodando
+        run: |
+          sleep 30  # Tempo para o RustDesk iniciar
 
       - name: Mostrar informações de acesso
         run: |
-          echo "Você pode acessar o AnyDesk no ID: $(anydesk --get-id)"
+          # Aqui você pode colocar um comando para obter o ID ou a URL do RustDesk (caso necessário)
+          echo "Você pode acessar o RustDesk na máquina com a interface gráfica"
