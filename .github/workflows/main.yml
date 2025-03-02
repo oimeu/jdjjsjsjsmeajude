@@ -10,19 +10,29 @@ jobs:
       - name: Instalar pacotes necessários
         run: |
           sudo apt-get update
-          sudo apt-get install -y anydesk xvfb
+          sudo apt-get install -y ca-certificates curl apt-transport-https
 
-      - name: Instalar e configurar AnyDesk
+      - name: Adicionar chave GPG do AnyDesk
         run: |
-          # Baixar e instalar o AnyDesk
-          wget https://download.anydesk.com/linux/anydesk_6.1.1-1_amd64.deb
-          sudo dpkg -i anydesk_6.1.1-1_amd64.deb
-          sudo apt-get install -f  # Resolver dependências
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://keys.anydesk.com/repos/DEB-GPG-KEY -o /etc/apt/keyrings/keys.anydesk.com.asc
+          sudo chmod a+r /etc/apt/keyrings/keys.anydesk.com.asc
 
-          # Rodar AnyDesk em segundo plano
+      - name: Adicionar repositório do AnyDesk
+        run: |
+          echo "deb [signed-by=/etc/apt/keyrings/keys.anydesk.com.asc] https://deb.anydesk.com all main" | sudo tee /etc/apt/sources.list.d/anydesk-stable.list > /dev/null
+          
+      - name: Atualizar repositórios e instalar AnyDesk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y anydesk
+
+      - name: Iniciar AnyDesk em segundo plano
+        run: |
           anydesk &
+          sleep 5  # Espera o AnyDesk iniciar
 
-      - name: Configurar Xvfb para criar ambiente gráfico
+      - name: Configurar e iniciar Xvfb
         run: |
           export DISPLAY=:99
           nohup Xvfb :99 -screen 0 1024x768x16 &
